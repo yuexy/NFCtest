@@ -16,6 +16,7 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,6 +35,8 @@ public class NFCtest extends Activity
 
     private Button wBt;
 
+    private EditText editText;
+
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
@@ -48,6 +51,7 @@ public class NFCtest extends Activity
         NfcTest = (TextView) findViewById(R.id.test);
         nfcAdapter = NfcAdapter.getDefaultAdapter(this);
         wBt = (Button)findViewById(R.id.write_bt);
+        editText = (EditText)findViewById(R.id.num);
 
         TestNFC();
 
@@ -56,7 +60,8 @@ public class NFCtest extends Activity
             @Override
             public void onClick(View v)
             {
-                trySector((short)11);
+                writeNFC(IntegerToHex(Integer.parseInt(editText.getText().toString())));
+                //System.out.println("aha-->" + IntegerToHex(Integer.parseInt(editText.getText().toString())));
             }
         });
     }
@@ -95,6 +100,7 @@ public class NFCtest extends Activity
     private boolean readFromTag(Intent intent)
     {
         Tag tagFromIntent = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+        byte[] a1 = {(byte)0xAC, (byte)0x20, (byte)0x10, (byte)0x13, (byte)0x79, (byte)0xDB};
 //        for (String tech : tagFromIntent.getTechList())
 //        {
 //            System.out.println(tech);
@@ -136,7 +142,10 @@ public class NFCtest extends Activity
 
             for (int i = 0; i < sectorCount; i++)
             {
-                auth = mfc.authenticateSectorWithKeyA(i, MifareClassic.KEY_DEFAULT);
+                if (i == 11 || i == 12)
+                    auth = mfc.authenticateSectorWithKeyA(i, a1);
+                else
+                    auth = mfc.authenticateSectorWithKeyA(i, MifareClassic.KEY_DEFAULT);
 
 //                String test = "";
 //                for (int p = 0; p < MifareClassic.KEY_DEFAULT.length; p++)
@@ -165,7 +174,7 @@ public class NFCtest extends Activity
                 }
             }
 
-            //System.out.println("metaInfo:" + metaInfo);
+            System.out.println("metaInfo:" + metaInfo);
             NfcTest.setText(metaInfo);
         }
         catch (IOException e)
@@ -188,20 +197,27 @@ public class NFCtest extends Activity
         return false;
     }
 
-    private void writeNFC()
+    private void writeNFC(List<String> list)
     {
-        byte[] bytes = {-54, -70, -26, 18, -124, 8, 4, 0, 98, 99, 100, 101, 102, 103, 104, 105};
-        byte[] bytes1 = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-        byte[] bytes2 = {0, 0, 0, 0, 0, 0, -1, 7, -128, 105, -1, -1, -1, -1, -1, -1};
+        byte[] bytes = {0, 0, 17, -81, 24, 84, 16, 4, 1, 21, 0, 0, 0, 4, 0, -112};
+        byte[] bytes1 = {(byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00, 24, 84, 16, 4, 1, 21, 0, 0, 0, 4, 0, -112};
+        byte[] key = {(byte)0xAC, (byte)0x20, (byte)0x10, (byte)0x13, (byte)0x79, (byte)0xDB};
+
+        for (int i = 0; i < list.size(); i++)
+        {
+            bytes1[3 - i] = (byte)Integer.parseInt(list.get(i), 16);
+        }
+
         try
         {
             mfc.connect();
             boolean auth = false;
-            short sectorAddress = 11;
-            auth = mfc.authenticateSectorWithKeyA(sectorAddress, MifareClassic.KEY_DEFAULT);
+            short sectorAddress = 12;
+            auth = mfc.authenticateSectorWithKeyA(sectorAddress, key);
             if (auth)
             {
-                mfc.writeBlock(1, bytes2);
+                mfc.writeBlock(48, bytes1);
+                mfc.writeBlock(49, bytes1);
                 Toast.makeText(this, "写入成功", Toast.LENGTH_LONG).show();
             }
         }
@@ -231,102 +247,38 @@ public class NFCtest extends Activity
 
             stringBuilder1.append(src[i] + " ");
         }
-        return stringBuilder1.toString();
+        return stringBuilder.toString();
     }
 
-    private void trySector(short sect)
+    private List<String> IntegerToHex(int x)
     {
-        List<byte[]> lists = new ArrayList<byte[]>();
+        String hex = Integer.toHexString(x);
+        //System.out.println("hex -->" + hex);
+        List<String> list = new ArrayList<String>();
 
-        byte[] a1 = {(byte)0xD3, (byte)0xF7, (byte)0xD3, (byte)0xF7, (byte)0xD3, (byte)0xF7};
-        byte[] a2 = {(byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF};
-        byte[] a3 = {(byte)0xA0, (byte)0xA1, (byte)0xA2, (byte)0xA3, (byte)0xA4, (byte)0xA5};
-        byte[] a4 = {(byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00};
-        byte[] a5 = {(byte)0xA1, (byte)0xB1, (byte)0xC1, (byte)0xD1, (byte)0xE1, (byte)0xF1};
-        byte[] a6 = {(byte)0xB1, (byte)0xB2, (byte)0xB3, (byte)0xB4, (byte)0xB5, (byte)0xB6};
+        byte[] bytes = new byte[4];
+        char[] hexs = hex.toCharArray();
 
-        lists.add(a1);
-        lists.add(a2);
-        lists.add(a3);
-        lists.add(a4);
-        lists.add(a5);
-        lists.add(a6);
+//        for (int i = 0; i < hexs.length; i++)
+//        {
+//            System.out.println("hexs" + i + ":" + hexs[i]);
+//        }
 
-        try
+        for (int i = hexs.length - 1; i >= 0; i = i - 2)
         {
-            mfc.connect();
-            short sector = sect;
-            boolean auth = false;
-            int i;
-            int a = -128, b = -128, c = -128, d = -128, e = -128, f = -128;
-
-            for (i = 0; i < lists.size(); i++)
+            String hello = "";
+            if (i == 0)
             {
-                auth = mfc.authenticateSectorWithKeyA(sector, lists.get(i));
-                if (auth)
-                    break;
+                hello += (hexs[i] + "");
             }
-            if (auth)
-                System.out.println("true-->" + i);
             else
-                System.out.println("false");
+            {
+                hello += ("" + hexs[i - 1]) + ("" + hexs[i]);
+            }
 
-//            for (a = -128; a < 128; a++)
-//            {
-//                for (b = -128; b < 128; b++)
-//                {
-//                    for (c = -128; c < 128; c++)
-//                    {
-//                        for (d = -128; d < 128; d++)
-//                        {
-//                            for (e = -128; e < 128; e++)
-//                            {
-//                                for (f = -128; f < 128; f++)
-//                                {
-//                                    byte[] test = {(byte)a, (byte)b, (byte)c, (byte)d, (byte)e, (byte)f};
-//                                    auth = mfc.authenticateSectorWithKeyA(sector, test);
-//                                    System.out.println("test:" + a + " " + b + " " + c + " " + d + " " + e + " " + f);
-//                                    if (auth)
-//                                        break;
-//                                }
-//                                if (auth)
-//                                    break;
-//                            }
-//                            if (auth)
-//                                break;
-//                        }
-//                        if (auth)
-//                            break;
-//                    }
-//                    if (auth)
-//                        break;
-//                }
-//                if (auth)
-//                    break;
-//            }
-//
-//            if (auth)
-//            {
-//                System.out.println("i:" + a + " " + b + " " + c + " " + d + " " + e + " " + f);
-//                NfcTest.setText("i:" + a + " " + b + " " + c + " " + d + " " + e + " " + f);
-//            }
-//            else
-//                System.out.println("false");
+            //System.out.println("hello -->" + hello);
+            list.add(hello);
         }
-        catch (IOException e)
-        {
-            e.printStackTrace();
-        }
-        finally
-        {
-            try
-            {
-                mfc.close();
-            }
-            catch (IOException e)
-            {
-                e.printStackTrace();
-            }
-        }
+        return list;
     }
 }
