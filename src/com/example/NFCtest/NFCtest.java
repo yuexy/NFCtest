@@ -252,12 +252,12 @@ public class NFCtest extends Activity
 	private void writeNFC(List<String> list)
 	{
 		byte[] bytes = {0, 0, 17, - 81, 24, 84, 16, 4, 1, 21, 0, 0, 0, 4, 0, - 112};
-		byte[] nq_by = {(byte) 0x36,
-				(byte) 0x4a,
+		byte[] nq_by = {(byte) 0x26,
+				(byte) 0x5a,
+				(byte) 0x3b,
+				(byte) 0x1f,
 				(byte) 0x00,
-				(byte) 0x00,
-				(byte) 0x00,
-				(byte) 0xb5,
+				(byte) 0xa5,
 				(byte) 0x00,
 				(byte) 0x00,
 				(byte) 0x00,
@@ -268,6 +268,22 @@ public class NFCtest extends Activity
 				(byte) 0xfc,
 				(byte) 0x01,
 				(byte) 0xb3};
+		byte[] nq_by_2 = {(byte) 0x02,
+				(byte) 0x01,
+				(byte) 0xd0,
+				(byte) 0x06,
+				(byte) 0xff,
+				(byte) 0xbb,
+				(byte) 0x6e,
+				(byte) 0x00,
+				(byte) 0x04,
+				(byte) 0xa7,
+				(byte) 0x54,
+				(byte) 0x66,
+				(byte) 0x13,
+				(byte) 0x14,
+				(byte) 0x69,
+				(byte) 0x0b};
 		byte[] bytes1 = {(byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, 24, 84, 16, 4, 1, 21, 0, 0, 0, 4, 0, - 112};
 		byte[] key = {(byte) 0xAC, (byte) 0x20, (byte) 0x10, (byte) 0x13, (byte) 0x79, (byte) 0xDB};
 		byte[] nq_b = {(byte) 0x95, (byte) 0x66, (byte) 0x05, (byte) 0x14, (byte) 0x69, (byte) 0x02};
@@ -286,6 +302,7 @@ public class NFCtest extends Activity
 			if (auth)
 			{
 				mfc.writeBlock(40, nq_by);
+				//mfc.writeBlock(41, nq_by_2);
 				mfc.writeBlock(42, nq_by);
 				Toast.makeText(this, "写入成功", Toast.LENGTH_LONG).show();
 			}
